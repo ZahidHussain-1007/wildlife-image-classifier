@@ -1,6 +1,7 @@
 import { Link, useLocation } from 'react-router';
 import { Button } from './ui/button';
 import { Settings, User } from 'lucide-react';
+import { useTheme } from 'next-themes';
 import { useAuth } from '../context/AuthContext';
 import {
   DropdownMenu,
@@ -12,6 +13,7 @@ import {
 export function Header() {
   const { user, logout, isAuthenticated } = useAuth();
   const location = useLocation();
+  const { theme, setTheme } = useTheme();
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -56,8 +58,16 @@ export function Header() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
+                  <DropdownMenuItem asChild>
+                    <Link to="/profile">Profile</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                  >
+                    Toggle theme
+                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={logout}>
-                    Logout
+                    Sign out
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

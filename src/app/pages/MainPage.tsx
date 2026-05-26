@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Upload, Image as ImageIcon, Trash2, Clock } from 'lucide-react';
@@ -20,6 +20,7 @@ const ANIMAL_TYPES = [
 ];
 
 export function MainPage() {
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [history, setHistory] = useState<PredictionHistory[]>([]);
   const [prediction, setPrediction] = useState<{ animal: string; confidence: number } | null>(null);
@@ -36,6 +37,23 @@ export function MainPage() {
     }
   }, []);
 
+  const saveHistory = (updatedHistory: PredictionHistory[]) => {
+    setHistory(updatedHistory);
+    localStorage.setItem('predictionHistory', JSON.stringify(updatedHistory));
+  };
+
+  const addHistoryItem = (item: PredictionHistory) => {
+    setHistory((currentHistory) => {
+      const updatedHistory = [item, ...currentHistory];
+      localStorage.setItem('predictionHistory', JSON.stringify(updatedHistory));
+      return updatedHistory;
+    });
+  };
+
+  const openImagePicker = () => {
+    fileInputRef.current?.click();
+  };
+
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -46,6 +64,7 @@ export function MainPage() {
       };
       reader.readAsDataURL(file);
     }
+    e.target.value = '';
   };
 
   const handlePredict = () => {
@@ -71,15 +90,17 @@ export function MainPage() {
         timestamp: new Date(),
       };
 
-      const updatedHistory = [newHistoryItem, ...history];
-      setHistory(updatedHistory);
-      localStorage.setItem('predictionHistory', JSON.stringify(updatedHistory));
+      addHistoryItem(newHistoryItem);
     }, 2000);
   };
 
   const clearHistory = () => {
     setHistory([]);
     localStorage.removeItem('predictionHistory');
+  };
+
+  const deleteHistoryItem = (id: string) => {
+    saveHistory(history.filter((item) => item.id !== id));
   };
 
   const formatTimestamp = (date: Date) => {
@@ -116,41 +137,51 @@ export function MainPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="border-2 border-dashed rounded-lg p-8 text-center hover:border-primary transition-colors">
+                <div
+                  className="border-2 border-dashed rounded-lg p-8 text-center hover:border-primary transition-colors"
+                  role="button"
+                  tabIndex={0}
+                  onClick={!selectedImage ? openImagePicker : undefined}
+                  onKeyDown={(event) => {
+                    if (!selectedImage && (event.key === 'Enter' || event.key === ' ')) {
+                      event.preventDefault();
+                      openImagePicker();
+                    }
+                  }}
+                >
                   <input
+                    ref={fileInputRef}
                     type="file"
                     id="image-upload"
                     className="hidden"
                     accept="image/*"
                     onChange={handleImageUpload}
                   />
-                  <label htmlFor="image-upload" className="cursor-pointer">
-                    {selectedImage ? (
-                      <div className="space-y-4">
-                        <ImageWithFallback
-                          src={selectedImage}
-                          alt="Selected animal"
-                          className="max-h-64 mx-auto rounded-lg object-contain"
-                        />
-                        <Button variant="outline" size="sm" type="button">
-                          <Upload className="mr-2 h-4 w-4" />
-                          Change Image
-                        </Button>
+                  {selectedImage ? (
+                    <div className="space-y-4">
+                      <ImageWithFallback
+                        src={selectedImage}
+                        alt="Selected animal"
+                        className="max-h-64 mx-auto rounded-lg object-contain"
+                      />
+                      <Button variant="outline" size="sm" type="button" onClick={openImagePicker}>
+                        <Upload className="mr-2 h-4 w-4" />
+                        Change Image
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="flex justify-center">
+                        <ImageIcon className="h-16 w-16 text-muted-foreground" />
                       </div>
-                    ) : (
-                      <div className="space-y-4">
-                        <div className="flex justify-center">
-                          <ImageIcon className="h-16 w-16 text-muted-foreground" />
-                        </div>
-                        <div>
-                          <p className="text-lg font-medium">Click to upload</p>
-                          <p className="text-sm text-muted-foreground">
-                            PNG, JPG, GIF up to 10MB
-                          </p>
-                        </div>
+                      <div>
+                        <p className="text-lg font-medium">Click to upload</p>
+                        <p className="text-sm text-muted-foreground">
+                          PNG, JPG, GIF up to 10MB
+                        </p>
                       </div>
-                    )}
-                  </label>
+                    </div>
+                  )}
                 </div>
 
                 {selectedImage && (
@@ -165,7 +196,7 @@ export function MainPage() {
                 )}
 
                 {prediction && (
-                  <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-primary">
+                  <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-primary dark:from-emerald-950/50 dark:to-slate-900 dark:border-emerald-400/50">
                     <CardContent className="pt-6">
                       <div className="text-center space-y-2">
                         <p className="text-sm text-muted-foreground">Predicted Species</p>
@@ -207,7 +238,7 @@ export function MainPage() {
                 <div className="flex items-center justify-between">
                   <CardTitle>History</CardTitle>
                   {history.length > 0 && (
-                    <Button variant="ghost" size="sm" onClick={clearHistory}>
+                    <Button variant="ghost" size="sm" onClick={clearHistory} aria-label="Clear all history">
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   )}
@@ -228,11 +259,22 @@ export function MainPage() {
                     <div className="space-y-4">
                       {history.map((item) => (
                         <Card key={item.id} className="overflow-hidden">
-                          <ImageWithFallback
-                            src={item.imageUrl}
-                            alt={item.prediction}
-                            className="w-full h-32 object-cover"
-                          />
+                          <div className="relative">
+                            <ImageWithFallback
+                              src={item.imageUrl}
+                              alt={item.prediction}
+                              className="w-full h-32 object-cover"
+                            />
+                            <Button
+                              variant="secondary"
+                              size="icon"
+                              className="absolute right-2 top-2 size-8 shadow-sm"
+                              onClick={() => deleteHistoryItem(item.id)}
+                              aria-label={`Delete ${item.prediction} prediction`}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                           <CardContent className="p-3 space-y-2">
                             <div className="flex items-center justify-between">
                               <Badge variant="secondary">{item.prediction}</Badge>
