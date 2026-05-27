@@ -1,0 +1,6 @@
+{
+  "model_name": "animal_species",
+  "architecture": "efficientnet",
+  "inference_enabled": true,
+  "labels_path": "labels.json"
+}

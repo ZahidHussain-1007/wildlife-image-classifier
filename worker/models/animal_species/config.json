@@ -1,6 +1,0 @@
-{
-  "model_name": "animal_species",
-  "architecture": "vgg16",
-  "inference_enabled": false,
-  "labels_path": "labels.json"
-}
