@@ -1,33 +1,25 @@
-import React from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Button } from '../components/ui/button';
-import { Link } from 'react-router';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 
 export function ProfilePage() {
   const { user } = useAuth();
+  const name = user?.user_metadata?.full_name ?? user?.user_metadata?.name ?? 'Google User';
+  const avatarUrl = user?.user_metadata?.avatar_url ?? user?.user_metadata?.picture;
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-2xl font-semibold mb-4">Profile</h1>
-      {user ? (
-        <div className="space-y-2">
-          <div>
-            <strong>Username: </strong>
-            <span>{user.username}</span>
+      <Card className="mx-auto max-w-lg">
+        <CardHeader>
+          <CardTitle>Profile</CardTitle>
+        </CardHeader>
+        <CardContent className="flex items-center gap-4">
+          {avatarUrl && <img src={avatarUrl} alt={name} className="h-16 w-16 rounded-full" />}
+          <div className="space-y-1">
+            <p className="text-lg font-medium">{name}</p>
+            <p className="text-muted-foreground">{user?.email}</p>
           </div>
-          <div>
-            <strong>Email: </strong>
-            <span>{user.email}</span>
-          </div>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          <p>You are not logged in.</p>
-          <Link to="/login">
-            <Button>Go to Login</Button>
-          </Link>
-        </div>
-      )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

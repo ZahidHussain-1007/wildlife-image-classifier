@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router';
 import { Button } from './ui/button';
-import { Settings, User } from 'lucide-react';
+import { LayoutDashboard, Settings, User } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -14,6 +14,9 @@ export function Header() {
   const { user, logout, isAuthenticated } = useAuth();
   const location = useLocation();
   const { theme, setTheme } = useTheme();
+  const userName =
+    user?.user_metadata?.full_name ?? user?.user_metadata?.name ?? user?.email ?? 'User';
+  const avatarUrl = user?.user_metadata?.avatar_url ?? user?.user_metadata?.picture;
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -41,6 +44,16 @@ export function Header() {
                 About
               </Button>
             </Link>
+            {isAuthenticated && (
+              <Link to="/dashboard">
+                <Button
+                  variant={isActive('/dashboard') ? 'default' : 'ghost'}
+                  size="sm"
+                >
+                  Dashboard
+                </Button>
+              </Link>
+            )}
           </nav>
         </div>
 
@@ -48,8 +61,12 @@ export function Header() {
           {isAuthenticated ? (
             <>
               <div className="flex items-center gap-2 px-3 py-1.5 bg-secondary rounded-md">
-                <User className="h-4 w-4" />
-                <span className="text-sm font-medium">{user?.username}</span>
+                {avatarUrl ? (
+                  <img src={avatarUrl} alt={userName} className="h-6 w-6 rounded-full" />
+                ) : (
+                  <User className="h-4 w-4" />
+                )}
+                <span className="max-w-32 truncate text-sm font-medium">{userName}</span>
               </div>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -59,6 +76,12 @@ export function Header() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem asChild>
+                    <Link to="/dashboard">
+                      <LayoutDashboard className="h-4 w-4" />
+                      Dashboard
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
                     <Link to="/profile">Profile</Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem
@@ -66,7 +89,7 @@ export function Header() {
                   >
                     Toggle theme
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={logout}>
+                  <DropdownMenuItem onClick={() => void logout()}>
                     Sign out
                   </DropdownMenuItem>
                 </DropdownMenuContent>

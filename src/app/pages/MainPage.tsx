@@ -5,6 +5,8 @@ import { Upload, Image as ImageIcon, Trash2, Clock } from 'lucide-react';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import { ScrollArea } from '../components/ui/scroll-area';
 import { Badge } from '../components/ui/badge';
+import { useAuth } from '../context/AuthContext';
+import { savePrediction } from '../services/predictionHistory';
 
 interface PredictionHistory {
   id: string;
@@ -20,11 +22,13 @@ const ANIMAL_TYPES = [
 ];
 
 export function MainPage() {
+  const { user } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [history, setHistory] = useState<PredictionHistory[]>([]);
   const [prediction, setPrediction] = useState<{ animal: string; confidence: number } | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [saveError, setSaveError] = useState('');
 
   useEffect(() => {
     // Load history from localStorage
@@ -61,6 +65,7 @@ export function MainPage() {
       reader.onloadend = () => {
         setSelectedImage(reader.result as string);
         setPrediction(null);
+        setSaveError('');
       };
       reader.readAsDataURL(file);
     }
@@ -68,12 +73,13 @@ export function MainPage() {
   };
 
   const handlePredict = () => {
-    if (!selectedImage) return;
+    if (!selectedImage || !user) return;
 
     setIsAnalyzing(true);
+    setSaveError('');
     
     // Simulate AI prediction with random result
-    setTimeout(() => {
+    setTimeout(async () => {
       const randomAnimal = ANIMAL_TYPES[Math.floor(Math.random() * ANIMAL_TYPES.length)];
       const randomConfidence = Math.floor(Math.random() * 20) + 80; // 80-100%
       
@@ -91,6 +97,17 @@ export function MainPage() {
       };
 
       addHistoryItem(newHistoryItem);
+
+      try {
+        await savePrediction({
+          userId: user.id,
+          image: selectedImage,
+          predictedAnimal: randomAnimal,
+          confidence: randomConfidence,
+        });
+      } catch {
+        setSaveError('Prediction worked, but saving to Supabase failed.');
+      }
     }, 2000);
   };
 
@@ -214,6 +231,8 @@ export function MainPage() {
                     </CardContent>
                   </Card>
                 )}
+
+                {saveError && <p className="text-sm text-destructive">{saveError}</p>}
               </CardContent>
             </Card>
 

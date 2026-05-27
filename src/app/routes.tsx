@@ -1,22 +1,35 @@
 import { createBrowserRouter } from 'react-router';
 import { RootLayout } from './layouts/RootLayout';
+import { ProtectedRoute } from './components/ProtectedRoute';
 import { MainPage } from './pages/MainPage';
 import { LoginPage } from './pages/LoginPage';
 import { AboutPage } from './pages/AboutPage';
 import { ProfilePage } from './pages/ProfilePage';
+import { DashboardPage } from './pages/DashboardPage';
+import { AuthCallbackPage } from './pages/AuthCallbackPage';
 
 export const router = createBrowserRouter([
   {
     path: '/',
     Component: RootLayout,
     children: [
-      { index: true, Component: MainPage },
-      { path: 'profile', Component: ProfilePage },
+      {
+        Component: ProtectedRoute,
+        children: [
+          { index: true, Component: MainPage },
+          { path: 'profile', Component: ProfilePage },
+          { path: 'dashboard', Component: DashboardPage },
+        ],
+      },
       { path: 'about', Component: AboutPage },
     ],
   },
   {
     path: '/login',
     Component: LoginPage,
+  },
+  {
+    path: '/auth/callback',
+    Component: AuthCallbackPage,
   },
 ]);
