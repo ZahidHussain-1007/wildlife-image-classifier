@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router';
 import { Button } from './ui/button';
-import { LayoutDashboard, Settings, User } from 'lucide-react';
+import { Settings, User } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -44,16 +44,6 @@ export function Header() {
                 About
               </Button>
             </Link>
-            {isAuthenticated && (
-              <Link to="/dashboard">
-                <Button
-                  variant={isActive('/dashboard') ? 'default' : 'ghost'}
-                  size="sm"
-                >
-                  Dashboard
-                </Button>
-              </Link>
-            )}
           </nav>
         </div>
 
@@ -75,12 +65,6 @@ export function Header() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem asChild>
-                    <Link to="/dashboard">
-                      <LayoutDashboard className="h-4 w-4" />
-                      Dashboard
-                    </Link>
-                  </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link to="/profile">Profile</Link>
                   </DropdownMenuItem>

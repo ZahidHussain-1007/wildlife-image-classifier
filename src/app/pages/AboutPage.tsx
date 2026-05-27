@@ -130,44 +130,81 @@ export function AboutPage() {
             <CardContent className="p-8 space-y-6">
               <div>
                 <h3 className="text-xl font-semibold mb-3">Overview</h3>
-                <p className="text-muted-foreground leading-relaxed">
-                  The Animal Species Prediction project is an advanced computer vision application that leverages 
-                  deep learning to classify images into ten different animal categories. Using the Animals-10 dataset 
-                  from Kaggle, our system can accurately identify dogs, cats, horses, spiders, butterflies, chickens, 
-                  sheep, cows, squirrels, and elephants.
+                <p className="text-muted-foreground leading-relaxed mb-3">
+                  The Animal Species Prediction project is a deep learning and computer vision application designed to classify images into ten different animal categories. The project was built as a hands-on learning experience to understand how Convolutional Neural Networks (CNNs) and transfer learning work in real-world image classification tasks.
                 </p>
+                <p className="text-muted-foreground leading-relaxed mb-3">
+                  Using the Animals-10 dataset from Kaggle, the model can identify:
+                </p>
+                <ul className="list-disc list-inside space-y-2 text-muted-foreground ml-4">
+                  <li>Dog</li>
+                  <li>Cat</li>
+                  <li>Horse</li>
+                  <li>Spider</li>
+                  <li>Butterfly</li>
+                  <li>Chicken</li>
+                  <li>Sheep</li>
+                  <li>Cow</li>
+                  <li>Squirrel</li>
+                  <li>Elephant</li>
+                </ul>
               </div>
 
               <div>
                 <h3 className="text-xl font-semibold mb-3">Technology Stack</h3>
                 <p className="text-muted-foreground leading-relaxed mb-3">
-                  We utilize VGG-16, a state-of-the-art Convolutional Neural Network (CNN) architecture that has been 
-                  pre-trained on ImageNet, which contains over 14 million images. The model consists of:
+                  This project uses a fine-tuned EfficientNet Convolutional Neural Network (CNN) model trained with transfer learning. Instead of training a model completely from scratch, transfer learning was used to improve training efficiency and accuracy.
+                </p>
+                <p className="text-muted-foreground leading-relaxed mb-3">
+                  Technologies used:
                 </p>
                 <ul className="list-disc list-inside space-y-2 text-muted-foreground ml-4">
-                  <li>16 weight layers including convolutional and fully connected layers</li>
-                  <li>Transfer learning from ImageNet for improved accuracy</li>
-                  <li>Custom classification layer trained on the Animals-10 dataset</li>
-                  <li>TensorFlow and Keras for model implementation</li>
+                  <li>TensorFlow</li>
+                  <li>Keras</li>
+                  <li>EfficientNet Transfer Learning</li>
+                  <li>React + TailwindCSS</li>
+                  <li>NestJS</li>
+                  <li>FastAPI</li>
+                  <li>Supabase</li>
                 </ul>
               </div>
 
               <div>
                 <h3 className="text-xl font-semibold mb-3">How It Works</h3>
-                <p className="text-muted-foreground leading-relaxed">
-                  Our system processes uploaded images through multiple convolutional layers that extract features 
-                  like edges, textures, and patterns. These features are then analyzed by the neural network to 
-                  determine the most likely animal species. The confidence score represents the model's certainty 
-                  in its prediction, providing transparency in the classification process.
+                <p className="text-muted-foreground leading-relaxed mb-3">
+                  When a user uploads an image, the system preprocesses the image and passes it through the trained EfficientNet model. The CNN extracts visual features such as edges, textures, shapes, and patterns to determine the most likely animal species.
                 </p>
+                <p className="text-muted-foreground leading-relaxed mb-3">
+                  The model then returns:
+                </p>
+                <ul className="list-disc list-inside space-y-2 text-muted-foreground ml-4 mb-3">
+                  <li>predicted animal category</li>
+                  <li>confidence score</li>
+                  <li>classification result</li>
+                </ul>
+                <p className="text-muted-foreground leading-relaxed mb-3">
+                  This project was mainly developed to understand:
+                </p>
+                <ul className="list-disc list-inside space-y-2 text-muted-foreground ml-4">
+                  <li>CNN architectures</li>
+                  <li>image preprocessing</li>
+                  <li>transfer learning</li>
+                  <li>model training workflow</li>
+                  <li>AI inference systems</li>
+                </ul>
               </div>
 
               <div>
                 <h3 className="text-xl font-semibold mb-3">Dataset</h3>
                 <p className="text-muted-foreground leading-relaxed">
-                  The Animals-10 dataset from Kaggle provides a diverse collection of labeled animal images across 
-                  ten categories. This multi-class classification problem has been carefully curated to ensure 
-                  balanced representation and high-quality training data for optimal model performance.
+                  The model was trained using the Animals-10 dataset from Kaggle, which contains thousands of labeled images across ten animal categories. The dataset was divided into training, validation, and testing sets to evaluate model performance more effectively.
+                </p>
+              </div>
+
+              <div>
+                <h3 className="text-xl font-semibold mb-3">Model Performance</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  The final EfficientNet transfer learning model is designed to classify images across the Animals-10 dataset categories.
                 </p>
               </div>
             </CardContent>

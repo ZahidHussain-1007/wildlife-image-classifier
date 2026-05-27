@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Upload, Image as ImageIcon, Trash2, Clock } from 'lucide-react';
@@ -16,18 +16,17 @@ interface PredictionHistory {
   timestamp: Date;
 }
 
-const ANIMAL_TYPES = [
-  'Dog', 'Cat', 'Horse', 'Spider', 'Butterfly', 
-  'Chicken', 'Sheep', 'Cow', 'Squirrel', 'Elephant'
-];
+const WORKER_API_URL = import.meta.env.VITE_WORKER_API_URL ?? 'http://127.0.0.1:8000';
 
 export function MainPage() {
   const { user } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [history, setHistory] = useState<PredictionHistory[]>([]);
   const [prediction, setPrediction] = useState<{ animal: string; confidence: number } | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [predictionError, setPredictionError] = useState('');
   const [saveError, setSaveError] = useState('');
 
   useEffect(() => {
@@ -61,10 +60,12 @@ export function MainPage() {
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      setSelectedFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
         setSelectedImage(reader.result as string);
         setPrediction(null);
+        setPredictionError('');
         setSaveError('');
       };
       reader.readAsDataURL(file);
@@ -72,27 +73,40 @@ export function MainPage() {
     e.target.value = '';
   };
 
-  const handlePredict = () => {
-    if (!selectedImage || !user) return;
+  const handlePredict = async () => {
+    if (!selectedFile || !selectedImage || !user) return;
 
     setIsAnalyzing(true);
+    setPredictionError('');
     setSaveError('');
-    
-    // Simulate AI prediction with random result
-    setTimeout(async () => {
-      const randomAnimal = ANIMAL_TYPES[Math.floor(Math.random() * ANIMAL_TYPES.length)];
-      const randomConfidence = Math.floor(Math.random() * 20) + 80; // 80-100%
-      
-      const newPrediction = { animal: randomAnimal, confidence: randomConfidence };
-      setPrediction(newPrediction);
-      setIsAnalyzing(false);
 
-      // Add to history
+    try {
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+
+      const response = await fetch(`${WORKER_API_URL}/predict`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || data.error) {
+        throw new Error(data.error || 'Prediction failed.');
+      }
+
+      const newPrediction = {
+        animal: String(data.prediction),
+        confidence: Math.round(Number(data.confidence)),
+      };
+
+      setPrediction(newPrediction);
+
       const newHistoryItem: PredictionHistory = {
         id: Date.now().toString(),
         imageUrl: selectedImage,
-        prediction: randomAnimal,
-        confidence: randomConfidence,
+        prediction: newPrediction.animal,
+        confidence: newPrediction.confidence,
         timestamp: new Date(),
       };
 
@@ -102,13 +116,17 @@ export function MainPage() {
         await savePrediction({
           userId: user.id,
           image: selectedImage,
-          predictedAnimal: randomAnimal,
-          confidence: randomConfidence,
+          predictedAnimal: newPrediction.animal,
+          confidence: newPrediction.confidence,
         });
       } catch {
         setSaveError('Prediction worked, but saving to Supabase failed.');
       }
-    }, 2000);
+    } catch (error) {
+      setPredictionError(error instanceof Error ? error.message : 'Prediction failed.');
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
   const clearHistory = () => {
@@ -212,6 +230,8 @@ export function MainPage() {
                   </Button>
                 )}
 
+                {predictionError && <p className="text-sm text-destructive">{predictionError}</p>}
+
                 {prediction && (
                   <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-primary dark:from-emerald-950/50 dark:to-slate-900 dark:border-emerald-400/50">
                     <CardContent className="pt-6">
@@ -242,9 +262,9 @@ export function MainPage() {
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
-                  This prediction model uses VGG-16, a Convolutional Neural Network trained on ImageNet 
-                  with over 14 million images. It can identify 10 different animal species: Dog, Cat, Horse, 
-                  Spider, Butterfly, Chicken, Sheep, Cow, Squirrel, and Elephant with high accuracy.
+                  This prediction model uses a fine-tuned Keras EfficientNet model. It can identify 10
+                  different animal species: Dog, Cat, Horse, Spider, Butterfly, Chicken, Sheep, Cow,
+                  Squirrel, and Elephant with high accuracy.
                 </p>
               </CardContent>
             </Card>

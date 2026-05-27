@@ -1,0 +1,12 @@
+.git
+.env
+.env.*
+!.env.example
+node_modules
+dist
+worker/__pycache__
+worker/**/__pycache__
+worker/**/*.pyc
+worker/uploads
+worker/.venv
+dataset

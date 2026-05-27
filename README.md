@@ -4,7 +4,7 @@ A student-friendly wildlife image classifier project with:
 
 - React + Vite frontend
 - NestJS backend scaffold
-- Python worker scaffold for future model inference
+- Python FastAPI worker for model inference
 - Supabase authentication and prediction history storage
 
 ## Project Architecture
@@ -18,9 +18,8 @@ It handles:
 - Google login with Supabase
 - protected pages
 - image upload UI
-- mock wildlife prediction flow
+- wildlife prediction requests to the Python worker
 - saving prediction history to Supabase
-- dashboard/history display
 
 Run it with:
 
@@ -45,15 +44,22 @@ Run it with:
 npm run server:dev
 ```
 
-### Worker
+### Python Worker
 
 The worker lives in `worker`.
 
-It is intended for future Python model inference work, such as:
+It handles Python model inference:
 
 - loading the trained model
 - preprocessing uploaded images
 - returning real predictions
+
+Run it with:
+
+```bash
+cd worker
+uvicorn main:app --reload --host 0.0.0.0 --port 8000
+```
 
 Do not put frontend authentication logic in the worker.
 
@@ -78,6 +84,7 @@ Create a local `.env` file in the project root:
 ```env
 VITE_SUPABASE_URL=
 VITE_SUPABASE_ANON_KEY=
+VITE_WORKER_API_URL=http://127.0.0.1:8000
 ```
 
 You can copy `.env.example`:
@@ -250,6 +257,37 @@ Correct names:
 ```env
 VITE_SUPABASE_URL=
 VITE_SUPABASE_ANON_KEY=
+VITE_WORKER_API_URL=http://127.0.0.1:8000
+```
+
+## Docker Deployment
+
+The project includes Docker support for the React frontend and the Python FastAPI worker.
+
+For local Docker deployment:
+
+```bash
+docker compose up --build
+```
+
+Then open:
+
+```text
+http://localhost:8080
+```
+
+The frontend container serves the built Vite app with nginx and proxies prediction requests from `/worker` to the Python worker container. The worker stays on Docker's internal network, so it will not conflict with a local process already using port `8000`.
+
+Before building, make sure `.env` contains your Supabase values. In Docker Compose, `VITE_WORKER_API_URL` is set to `/worker` at build time so browser requests go through nginx.
+
+Useful checks:
+
+```bash
+npm run build
+npx tsc --noEmit
+npm run server:build
+python -m compileall worker
+docker compose config
 ```
 
 ### Auth Session Issues

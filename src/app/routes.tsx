@@ -5,7 +5,6 @@ import { MainPage } from './pages/MainPage';
 import { LoginPage } from './pages/LoginPage';
 import { AboutPage } from './pages/AboutPage';
 import { ProfilePage } from './pages/ProfilePage';
-import { DashboardPage } from './pages/DashboardPage';
 import { AuthCallbackPage } from './pages/AuthCallbackPage';
 
 export const router = createBrowserRouter([
@@ -18,7 +17,6 @@ export const router = createBrowserRouter([
         children: [
           { index: true, Component: MainPage },
           { path: 'profile', Component: ProfilePage },
-          { path: 'dashboard', Component: DashboardPage },
         ],
       },
       { path: 'about', Component: AboutPage },
