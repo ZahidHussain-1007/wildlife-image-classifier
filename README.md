@@ -1,93 +1,48 @@
 # Animal Species Prediction
 
-A student-friendly wildlife image classifier project with:
+A learning-focused deep learning and computer vision project for classifying animal
+images into ten Animals-10 dataset categories.
 
-- React + Vite frontend
+The project was built as a hands-on exploration of Convolutional Neural Networks
+(CNNs), EfficientNetB3 transfer learning, image preprocessing, and AI inference workflows.
+It includes a React frontend, a NestJS backend scaffold, and a Python FastAPI worker
+that serves the trained model.
+
+## Animal Classes
+
+- Dog
+- Cat
+- Horse
+- Spider
+- Butterfly
+- Chicken
+- Sheep
+- Cow
+- Squirrel
+- Elephant
+
+## Tech Stack
+
+- React + Vite + TailwindCSS
 - NestJS backend scaffold
-- Python FastAPI worker for model inference
+- Python FastAPI inference worker
+- TensorFlow and Keras
+- EfficientNetB3 transfer learning
 - Supabase authentication and prediction history storage
+- Docker and nginx for containerized frontend deployment
 
-## Project Architecture
-
-### Frontend
-
-The frontend lives in `src/app`.
-
-It handles:
-
-- Google login with Supabase
-- protected pages
-- image upload UI
-- wildlife prediction requests to the Python worker
-- saving prediction history to Supabase
-
-Run it with:
-
-```bash
-npm run dev
-```
-
-### NestJS Backend
-
-The backend scaffold lives in `src/server`.
-
-It currently contains simple modules for:
-
-- health checks
-- auth placeholder routes
-- users placeholder routes
-- prediction placeholder routes
-
-Run it with:
-
-```bash
-npm run server:dev
-```
-
-### Python Worker
-
-The worker lives in `worker`.
-
-It handles Python model inference:
-
-- loading the trained model
-- preprocessing uploaded images
-- returning real predictions
-
-Run it with:
-
-```bash
-cd worker
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
-```
-
-Do not put frontend authentication logic in the worker.
-
-### Supabase
-
-Supabase is used for:
-
-- Google OAuth login
-- storing authenticated user sessions in the browser
-- saving prediction history per logged-in user
-
-The Supabase client is configured in:
+## Repository Structure
 
 ```text
-src/lib/supabase.ts
+src/app      React application
+src/server   NestJS backend scaffold
+src/lib      Shared frontend clients
+worker       FastAPI model inference service
 ```
 
-## Environment Variables
+## Environment Setup
 
-Create a local `.env` file in the project root:
-
-```env
-VITE_SUPABASE_URL=
-VITE_SUPABASE_ANON_KEY=
-VITE_WORKER_API_URL=http://127.0.0.1:8000
-```
-
-You can copy `.env.example`:
+Copy the example environment file and fill in local values:
 
 ```bash
 cp .env.example .env
@@ -99,99 +54,111 @@ On Windows PowerShell:
 Copy-Item .env.example .env
 ```
 
-### Where To Get Supabase Credentials
+Required frontend variables:
 
-In your Supabase project:
-
-1. Open Supabase Dashboard.
-2. Go to Project Settings.
-3. Open API.
-4. Copy:
-   - Project URL into `VITE_SUPABASE_URL`
-   - anon public key into `VITE_SUPABASE_ANON_KEY`
-
-The anon public key is safe to use in frontend code. It is still protected by Supabase Row Level Security policies.
-
-NEVER commit `.env`.
-
-Never share or commit:
-
-- `.env`
-- Supabase `service_role` key
-- database passwords
-- Google OAuth client secret
-
-Important: the `service_role` key bypasses Row Level Security. It must NEVER be used in the frontend.
-
-## Setup For Teammates
-
-1. Clone the repo:
-
-```bash
-git clone <repo-url>
-cd wildlife-image-classifier
+```env
+VITE_SUPABASE_URL=
+VITE_SUPABASE_ANON_KEY=
+VITE_WORKER_API_URL=http://127.0.0.1:8000
 ```
 
-2. Install dependencies:
+Optional backend variables:
+
+```env
+PORT=3000
+FRONTEND_URL=http://localhost:5173
+WORKER_API_URL=http://127.0.0.1:8000
+```
+
+Never commit `.env`, Supabase `service_role` keys, database passwords, or Google
+OAuth client secrets. Only the Supabase anon public key belongs in frontend
+environment variables, and it should be protected with Row Level Security policies.
+
+## Local Development
+
+Install JavaScript dependencies:
 
 ```bash
 npm install
 ```
 
-3. Create your local `.env` file:
-
-```bash
-cp .env.example .env
-```
-
-4. Add your Supabase values to `.env`.
-
-5. Run the frontend:
+Run the frontend:
 
 ```bash
 npm run dev
 ```
 
-6. Run the NestJS backend in another terminal:
+Run the NestJS backend scaffold:
 
 ```bash
 npm run server:dev
 ```
 
-## Supabase Google OAuth Setup
+Run the Python worker:
 
-In Supabase Dashboard:
-
-1. Go to Authentication.
-2. Open Providers.
-3. Enable Google.
-4. Add your Google OAuth Client ID and Client Secret.
-
-In Google Cloud Console, make sure the authorized redirect URI includes your Supabase callback URL. Supabase shows this URL inside the Google provider setup page.
-
-In Supabase Authentication URL Configuration:
-
-Site URL:
-
-```text
-http://localhost:5173
+```bash
+cd worker
+pip install -r requirements.txt
+uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-Redirect URLs:
+## Build Checks
+
+Useful checks before deployment:
+
+```bash
+npm run build
+npm run server:build
+python -m compileall worker
+docker compose config
+```
+
+Generated folders such as `dist/`, `node_modules/`, and Python `__pycache__/`
+directories should not be committed.
+
+## Docker Deployment
+
+The project includes Docker support for the React frontend and FastAPI worker:
+
+```bash
+docker compose up --build
+```
+
+Then open:
+
+```text
+http://localhost:8080
+```
+
+The frontend container serves the Vite build with nginx and proxies `/worker`
+requests to the Python worker container. In Docker Compose, `VITE_WORKER_API_URL`
+is set to `/worker` at build time.
+
+## Supabase Notes
+
+Supabase is used for:
+
+- Google OAuth login
+- browser session management
+- prediction history storage per authenticated user
+
+Configure Google OAuth in the Supabase Dashboard under Authentication Providers.
+For local development, use:
+
+```text
+Site URL: http://localhost:5173
+Redirect URL: http://localhost:5173/auth/callback
+```
+
+If wildcard redirect URLs are enabled for local development, include:
 
 ```text
 http://localhost:5173/**
 ```
 
-At minimum, include:
+## Prediction History Table
 
-```text
-http://localhost:5173/auth/callback
-```
-
-## Prediction History SQL
-
-Run this in Supabase Dashboard -> SQL Editor -> New query:
+Run this in the Supabase SQL Editor if prediction history is enabled:
 
 ```sql
 create table if not exists public.prediction_history (
@@ -224,79 +191,10 @@ to authenticated
 using (auth.uid() = user_id);
 ```
 
-## Troubleshooting
+## Model
 
-### Google Provider Not Enabled
+The trained model file is stored in `worker/models/model.keras` with matching
+labels and config files. It is required by the FastAPI worker for local inference.
 
-If Google login does not open or Supabase reports that the provider is disabled, check:
-
-- Supabase Dashboard -> Authentication -> Providers
-- Google is enabled
-- Client ID and Client Secret are saved
-
-### `redirect_uri_mismatch`
-
-This usually means Google Cloud or Supabase redirect URLs do not match.
-
-Check:
-
-- Google Cloud authorized redirect URI matches the callback URL shown by Supabase
-- Supabase Site URL is `http://localhost:5173`
-- Supabase Redirect URLs include `http://localhost:5173/**`
-
-### Missing Environment Variables
-
-If the app shows a missing Supabase environment error:
-
-- confirm `.env` exists in the project root
-- confirm variables start with `VITE_`
-- restart the Vite dev server after editing `.env`
-
-Correct names:
-
-```env
-VITE_SUPABASE_URL=
-VITE_SUPABASE_ANON_KEY=
-VITE_WORKER_API_URL=http://127.0.0.1:8000
-```
-
-## Docker Deployment
-
-The project includes Docker support for the React frontend and the Python FastAPI worker.
-
-For local Docker deployment:
-
-```bash
-docker compose up --build
-```
-
-Then open:
-
-```text
-http://localhost:8080
-```
-
-The frontend container serves the built Vite app with nginx and proxies prediction requests from `/worker` to the Python worker container. The worker stays on Docker's internal network, so it will not conflict with a local process already using port `8000`.
-
-Before building, make sure `.env` contains your Supabase values. In Docker Compose, `VITE_WORKER_API_URL` is set to `/worker` at build time so browser requests go through nginx.
-
-Useful checks:
-
-```bash
-npm run build
-npx tsc --noEmit
-npm run server:build
-python -m compileall worker
-docker compose config
-```
-
-### Auth Session Issues
-
-If login succeeds but the app does not continue:
-
-- confirm `/auth/callback` is allowed in Supabase Redirect URLs
-- clear browser site data for `localhost:5173`
-- restart the dev server
-- check the browser console for Supabase errors
-
-The app restores sessions using `supabase.auth.getSession()` and listens for auth changes with `supabase.auth.onAuthStateChange(...)`.
+The final EfficientNetB3 transfer learning model achieved 98.20% test accuracy
+on the Animals-10 dataset.

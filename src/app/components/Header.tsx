@@ -1,4 +1,5 @@
 import { Link, useLocation } from 'react-router';
+import { useState } from 'react';
 import { Button } from './ui/button';
 import { Settings, User } from 'lucide-react';
 import { useTheme } from 'next-themes';
@@ -14,6 +15,7 @@ export function Header() {
   const { user, logout, isAuthenticated } = useAuth();
   const location = useLocation();
   const { theme, setTheme } = useTheme();
+  const [imgError, setImgError] = useState(false);
   const userName =
     user?.user_metadata?.full_name ?? user?.user_metadata?.name ?? user?.email ?? 'User';
   const avatarUrl = user?.user_metadata?.avatar_url ?? user?.user_metadata?.picture;
@@ -51,10 +53,15 @@ export function Header() {
           {isAuthenticated ? (
             <>
               <div className="flex items-center gap-2 px-3 py-1.5 bg-secondary rounded-md">
-                {avatarUrl ? (
-                  <img src={avatarUrl} alt={userName} className="h-6 w-6 rounded-full" />
+                {avatarUrl && !imgError ? (
+                  <img 
+                    src={avatarUrl} 
+                    alt={userName} 
+                    className="h-6 w-6 rounded-full" 
+                    onError={() => setImgError(true)} 
+                  />
                 ) : (
-                  <User className="h-4 w-4" />
+                  <User className="h-5 w-5" />
                 )}
                 <span className="max-w-32 truncate text-sm font-medium">{userName}</span>
               </div>

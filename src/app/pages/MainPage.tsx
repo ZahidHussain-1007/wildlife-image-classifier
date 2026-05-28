@@ -1,10 +1,19 @@
 import { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Upload, Image as ImageIcon, Trash2, Clock } from 'lucide-react';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import { ScrollArea } from '../components/ui/scroll-area';
 import { Badge } from '../components/ui/badge';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '../components/ui/dialog';
 import { useAuth } from '../context/AuthContext';
 import { savePrediction } from '../services/predictionHistory';
 
@@ -17,9 +26,12 @@ interface PredictionHistory {
 }
 
 const WORKER_API_URL = import.meta.env.VITE_WORKER_API_URL ?? 'http://127.0.0.1:8000';
+const SIGNUP_PROMPT_SEEN_KEY = 'signupPromptSeen';
+const GUEST_HISTORY_DISABLED_KEY = 'guestHistoryDisabled';
 
 export function MainPage() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -28,9 +40,26 @@ export function MainPage() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [predictionError, setPredictionError] = useState('');
   const [saveError, setSaveError] = useState('');
+  const [showSignupPrompt, setShowSignupPrompt] = useState(false);
+
+  const guestHistoryDisabled = () => localStorage.getItem(GUEST_HISTORY_DISABLED_KEY) === 'true';
 
   useEffect(() => {
-    // Load history from localStorage
+    if (loading) return;
+
+    if (!user && localStorage.getItem(SIGNUP_PROMPT_SEEN_KEY) !== 'true') {
+      setShowSignupPrompt(true);
+    }
+  }, [loading, user]);
+
+  useEffect(() => {
+    if (loading) return;
+
+    if (!user && guestHistoryDisabled()) {
+      setHistory([]);
+      return;
+    }
+
     const savedHistory = localStorage.getItem('predictionHistory');
     if (savedHistory) {
       setHistory(JSON.parse(savedHistory, (key, value) => {
@@ -38,14 +67,20 @@ export function MainPage() {
         return value;
       }));
     }
-  }, []);
+  }, [loading, user]);
 
   const saveHistory = (updatedHistory: PredictionHistory[]) => {
     setHistory(updatedHistory);
-    localStorage.setItem('predictionHistory', JSON.stringify(updatedHistory));
+    if (user || !guestHistoryDisabled()) {
+      localStorage.setItem('predictionHistory', JSON.stringify(updatedHistory));
+    }
   };
 
   const addHistoryItem = (item: PredictionHistory) => {
+    if (!user && guestHistoryDisabled()) {
+      return;
+    }
+
     setHistory((currentHistory) => {
       const updatedHistory = [item, ...currentHistory];
       localStorage.setItem('predictionHistory', JSON.stringify(updatedHistory));
@@ -74,7 +109,7 @@ export function MainPage() {
   };
 
   const handlePredict = async () => {
-    if (!selectedFile || !selectedImage || !user) return;
+    if (!selectedFile || !selectedImage) return;
 
     setIsAnalyzing(true);
     setPredictionError('');
@@ -112,15 +147,17 @@ export function MainPage() {
 
       addHistoryItem(newHistoryItem);
 
-      try {
-        await savePrediction({
-          userId: user.id,
-          image: selectedImage,
-          predictedAnimal: newPrediction.animal,
-          confidence: newPrediction.confidence,
-        });
-      } catch {
-        setSaveError('Prediction worked, but saving to Supabase failed.');
+      if (user) {
+        try {
+          await savePrediction({
+            userId: user.id,
+            image: selectedImage,
+            predictedAnimal: newPrediction.animal,
+            confidence: newPrediction.confidence,
+          });
+        } catch {
+          setSaveError('Prediction worked, but saving to Supabase failed.');
+        }
       }
     } catch (error) {
       setPredictionError(error instanceof Error ? error.message : 'Prediction failed.');
@@ -149,6 +186,19 @@ export function MainPage() {
     if (minutes < 60) return `${minutes}m ago`;
     if (hours < 24) return `${hours}h ago`;
     return `${days}d ago`;
+  };
+
+  const handleSignup = () => {
+    localStorage.setItem(SIGNUP_PROMPT_SEEN_KEY, 'true');
+    navigate('/login', { state: { from: { pathname: '/' } } });
+  };
+
+  const handleCancelSignup = () => {
+    localStorage.setItem(SIGNUP_PROMPT_SEEN_KEY, 'true');
+    localStorage.setItem(GUEST_HISTORY_DISABLED_KEY, 'true');
+    localStorage.removeItem('predictionHistory');
+    setHistory([]);
+    setShowSignupPrompt(false);
   };
 
   return (
@@ -336,6 +386,34 @@ export function MainPage() {
           </div>
         </div>
       </div>
+      <Dialog
+        open={showSignupPrompt}
+        onOpenChange={(open) => {
+          if (open) {
+            setShowSignupPrompt(true);
+            return;
+          }
+
+          handleCancelSignup();
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create an account?</DialogTitle>
+            <DialogDescription>
+              Sign up with Google to keep your wildlife predictions saved with your account.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={handleCancelSignup}>
+              Cancel
+            </Button>
+            <Button onClick={handleSignup}>
+              Sign up with Google
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

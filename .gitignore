@@ -1,7 +1,41 @@
+# Dependencies
 node_modules/
+
+# Build output
 dist/
-.env.*
+build/
+.next/
+out/
+coverage/
+
+# Environment files
 .env
+.env.*
 !.env.example
+
+# Python caches
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Logs and diagnostics
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Editor and OS files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+Wildlife_Classification_EfficientNetB3.html

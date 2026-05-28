@@ -12,10 +12,10 @@ export const router = createBrowserRouter([
     path: '/',
     Component: RootLayout,
     children: [
+      { index: true, Component: MainPage },
       {
         Component: ProtectedRoute,
         children: [
-          { index: true, Component: MainPage },
           { path: 'profile', Component: ProfilePage },
         ],
       },
